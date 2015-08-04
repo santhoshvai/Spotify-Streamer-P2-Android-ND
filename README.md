@@ -64,4 +64,4 @@ Migrate the existing UI flow to use a Master-Detail Structure for tablet. If yo
 
 In order to submit P2: Spotify Streamer App, Stage 2, please [use this link](https://www.google.com/url?q=https%3A%2F%2Freview.udacity.com%2F%23!%2Fprojects%2F60&sa=D&sntz=1&usg=AFQjCNEsXInMOSl3VGQCPdtzqwf-DMpytQ) and follow instructions.
 
-If you have any problems submitting your project, please email us at [mailto:android-project@udacity.com](android-project@udacity.com).
+If you have any problems submitting your project, please email us at [android-project@udacity.com](mailto:android-project@udacity.com).
