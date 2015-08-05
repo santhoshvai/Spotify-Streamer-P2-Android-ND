@@ -18,6 +18,7 @@ Tablet Interaction Flow
 **Task 1: Build a Simple Player UI**
 
 Use the layout fundamental skills you learned in Developing Android Apps to build a simple track player. You will launch this view via Intent when a user selects a specific track from the Artist Top Tracks view.
+
 ![P1_Spotify_screen3_play_track_preview_300x533.png](https://lh6.googleusercontent.com/2LKwh1Z_kNrc3Jb86o6tmx3i9xzm-_UNZ-sM7SIk4XUKbZy00EjlUXj0O7OWG_FHEq-RYiC3m4P0iUZsHevMY1UfjYXsRUbv2u7mFOv_egUi035iJKjdGDL6DbtU-nuQGJKi88w)
 
 **This player UI should display the following information:**
@@ -35,7 +36,7 @@ Use the layout fundamental skills you learned in Developing Android Apps to buil
   
 **Icons**
 
-To get the icons for the playback controls, you can use the ones that are built-in on Android as drawables. Check out[http://androiddrawables.com/](http://www.google.com/url?q=http%3A%2F%2Fandroiddrawables.com%2F&sa=D&sntz=1&usg=AFQjCNG6rIlxrhrgVUVFWC9KYwCCc34syw) to see all the built-in drawables. The ones used in the mockup are found in the Other section of the site:
+To get the icons for the playback controls, you can use the ones that are built-in on Android as drawables. Check out [http://androiddrawables.com/](http://www.google.com/url?q=http%3A%2F%2Fandroiddrawables.com%2F&sa=D&sntz=1&usg=AFQjCNG6rIlxrhrgVUVFWC9KYwCCc34syw) to see all the built-in drawables. The ones used in the mockup are found in the Other section of the site:
 
 - ic_media_play
 - ic_media_pause
