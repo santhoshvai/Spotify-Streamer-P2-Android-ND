@@ -47,7 +47,7 @@ Referencing built-in Android drawables involve using the syntax `@android:drawab
 
 ### Task 2: Implement playback for a selected track
 
-You will use Android’s [MediaPlayer API](http://developer.android.com/guide/topics/media/mediaplayer.html) to stream the track preview of a currently selected track.
+You will use Android’s [MediaPlayer API](http://developer.android.com/guide/topics/media/mediaplayer.html) to stream the track preview of a currently selected track.
 
 Please consult the [guide on using MediaPlayer](http://developer.android.com/guide/topics/media/mediaplayer.html#mediaplayer) on developer.android.com
 
@@ -56,9 +56,12 @@ Please consult the [guide on using MediaPlayer](http://developer.android.com/gu
 
 ### Task 3: Optimize the entire end to end experience for a tablet
 
-Migrate the existing UI flow to use a Master-Detail Structure for tablet. If you haven’t done so already, you will want to implementthree Fragments for your tablet UI: one for artist search, one for top track results, and another for Playback.
+Migrate the existing UI flow to use a Master-Detail Structure for tablet. If you haven’t done so already, you will want to implement three Fragments for your tablet UI: 
+* one for artist search 
+* one for top track results 
+* and another for Playback.
 
-- If you need a review of how to build for tablet, please refer back to [Lesson 5 of Developing Android Apps, where the instructors discuss a Master-Detail layout.](https://www.google.com/url?q=https%3A%2F%2Fwww.udacity.com%2Fcourse%2Fviewer%23!%2Fc-ud853%2Fl-1623168625%2Fe-1603010052%2Fm-1673948920&sa=D&sntz=1&usg=AFQjCNFe2T2WKgD1Td1O_7kUBsA6D3MgKg)
+- If you need a review of how to build for tablet, please refer back to [Lesson 5 of Developing Android Apps, where the instructors discuss a Master-Detail layout.](https://www.google.com/url?q=https%3A%2F%2Fwww.udacity.com%2Fcourse%2Fviewer%23!%2Fc-ud853%2Fl-1623168625%2Fe-1603010052%2Fm-1673948920&sa=D&sntz=1&usg=AFQjCNFe2T2WKgD1Td1O_7kUBsA6D3MgKg)
 - To display the Now Playing screen in a dialog on the tablet and in a normal activity on the phone, you can use a DialogFragment, which can act as a normal fragment (for the phone) or show in a dialog (for the tablet). See the [documentation on Dialogs](http://developer.android.com/guide/topics/ui/dialogs.html) for more information—the section called “Showing a Dialog Fullscreen or as an Embedded Fragment” is particularly helpful.
 
 ### Project Submission (Spotify Streamer App, Stage 2)
