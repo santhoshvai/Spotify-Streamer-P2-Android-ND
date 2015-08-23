@@ -2,6 +2,7 @@ package com.example.android.spotifystreamer;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -42,8 +43,10 @@ public class TopTracksActivityFragment extends Fragment {
     private ImageAndTwoTextListAdapter mTracksAdapter;
     private final SpotifyApi spotifyApi = new SpotifyApi();
     private List<Track> trackListCache = new ArrayList<Track>();
-    private String artistId = "";
-    private String artistName = "";
+    private String artistId;
+    private String artistName;
+    private String trackListCacheJson;
+    Gson gson = new Gson();
     private final SpotifyService spotify = spotifyApi.getService();
 
     public TopTracksActivityFragment() {
@@ -55,8 +58,7 @@ public class TopTracksActivityFragment extends Fragment {
         if (savedInstanceState != null) {
             // Restore value of members from saved state (during screen orientation changes)
             artistId = savedInstanceState.getString("artistId");
-            String trackListCacheJson = savedInstanceState.getString("trackListCache");
-            Gson gson = new Gson();
+            trackListCacheJson = savedInstanceState.getString("trackListCache");
             trackListCache = gson.fromJson(trackListCacheJson, new TypeToken<List<Track>>(){}.getType());
         } else {
             // Probably initialize members with default values for a new instance
@@ -69,9 +71,11 @@ public class TopTracksActivityFragment extends Fragment {
     public void onSaveInstanceState(Bundle savedInstanceState) {
         // Save the user's current state
         savedInstanceState.putString("artistId", artistId);
-        Gson gson = new Gson();
-        String trackListCacheJson = gson.toJson(trackListCache, new TypeToken<List<Track>>(){}.getType());
+        trackListCacheJson = gson.toJson(trackListCache, new TypeToken<List<Track>>() {
+        }.getType());
         savedInstanceState.putString("trackListCache", trackListCacheJson);
+
+
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -84,7 +88,7 @@ public class TopTracksActivityFragment extends Fragment {
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_tracks);
         listView.setAdapter(mTracksAdapter);
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
+        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT) && trackListCache.size() == 0) {
             artistId = intent.getStringExtra(Intent.EXTRA_TEXT);
             artistName = intent.getStringExtra("ArtistName");
             new updateTrackList().execute(new String[]{artistId});
@@ -93,9 +97,9 @@ public class TopTracksActivityFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (MiscUtils.isNetworkAvailable(getActivity().getApplicationContext())){
-                    Track track = mTracksAdapter.getItem(position);
+                    //Track track = mTracksAdapter.getItem(position);
                     Intent playTrackIntent = new Intent(getActivity(), TrackActivity.class)
-                            .putExtra(Intent.EXTRA_TEXT, track.id);
+                            .putExtra(Intent.EXTRA_TEXT, position);
                     playTrackIntent.putExtra("ArtistName", artistName);
                     startActivity(playTrackIntent);
                 } else
@@ -121,6 +125,10 @@ public class TopTracksActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(List<Track> topTracksResult) {
             mTracksAdapter.clear();
+            trackListCacheJson = gson.toJson(topTracksResult, new TypeToken<List<Track>>() {
+            }.getType());
+            MiscUtils.storeInSharePref(getActivity(), "trackListCache", trackListCacheJson);
+
             for (Track track: topTracksResult) {
                 mTracksAdapter.add(track);
             }
