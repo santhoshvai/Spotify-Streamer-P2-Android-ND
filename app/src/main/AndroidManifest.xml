@@ -33,6 +33,7 @@
         <activity
             android:name=".TrackActivity"
             android:label="@string/title_activity_track"
+            android:launchMode="singleTask"
             android:parentActivityName=".TopTracksActivity"
             android:theme="@style/CustomActionBarTheme" >
             <meta-data

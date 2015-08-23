@@ -23,6 +23,7 @@
     <ListView
         android:id="@+id/listview_artists"
         android:layout_width="match_parent"
+        style="@style/ForecastListStyle"
         android:layout_height="match_parent"
         android:layout_below="@+id/searchArtistLayout" />
 

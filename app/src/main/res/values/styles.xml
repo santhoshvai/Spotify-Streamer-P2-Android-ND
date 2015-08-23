@@ -15,4 +15,11 @@
         <item name="android:background">@color/translucentBlack</item>
         <item name="background">@color/translucentBlack</item>
     </style>
+    <style name="ForecastListStyle">
+        <!-- Here it's a stub.  In screens of sufficient width, this style includes modifications
+        for two-pane layout -->
+    </style>
+    <style name="dialogImage">
+        <!--stub-->
+    </style>
 </resources>

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,6 +45,7 @@ public class TopTracksActivityFragment extends Fragment {
     private final SpotifyApi spotifyApi = new SpotifyApi();
     private List<Track> trackListCache = new ArrayList<Track>();
     private String artistId;
+    private boolean twoPane;
     private String artistName;
     private String trackListCacheJson;
     Gson gson = new Gson();
@@ -54,6 +56,7 @@ public class TopTracksActivityFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("frag", "onCreate");
         // Check whether we're recreating a previously destroyed instance
         if (savedInstanceState != null) {
             // Restore value of members from saved state (during screen orientation changes)
@@ -62,6 +65,12 @@ public class TopTracksActivityFragment extends Fragment {
             trackListCache = gson.fromJson(trackListCacheJson, new TypeToken<List<Track>>(){}.getType());
         } else {
             // Probably initialize members with default values for a new instance
+            Bundle b = getArguments();
+            if (b != null) {
+                twoPane = true;
+                artistName = b.getString("ArtistName");
+                artistId = b.getString("artistId");
+            }
         }
         mTracksAdapter = new ImageAndTwoTextListAdapter (
                 getActivity(), // current context
@@ -75,7 +84,6 @@ public class TopTracksActivityFragment extends Fragment {
         }.getType());
         savedInstanceState.putString("trackListCache", trackListCacheJson);
 
-
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -88,20 +96,22 @@ public class TopTracksActivityFragment extends Fragment {
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_tracks);
         listView.setAdapter(mTracksAdapter);
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT) && trackListCache.size() == 0) {
-            artistId = intent.getStringExtra(Intent.EXTRA_TEXT);
-            artistName = intent.getStringExtra("ArtistName");
+        if ( trackListCache.size() == 0) {
+            if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
+                artistId = intent.getStringExtra(Intent.EXTRA_TEXT);
+                artistName = intent.getStringExtra("ArtistName");
+            }
             new updateTrackList().execute(new String[]{artistId});
         }
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (MiscUtils.isNetworkAvailable(getActivity().getApplicationContext())){
-                    //Track track = mTracksAdapter.getItem(position);
-                    Intent playTrackIntent = new Intent(getActivity(), TrackActivity.class)
-                            .putExtra(Intent.EXTRA_TEXT, position);
-                    playTrackIntent.putExtra("ArtistName", artistName);
-                    startActivity(playTrackIntent);
+                        Intent playTrackIntent = new Intent(getActivity(), TrackActivity.class)
+                                .putExtra(Intent.EXTRA_TEXT, position);
+                        playTrackIntent.putExtra("ArtistName", artistName);
+                        startActivity(playTrackIntent);
+//                    }
                 } else
                     UIUtils.InternetAccessibilityAlert(getActivity().findViewById(R.id.listview_artists));
             }

@@ -1,0 +1,25 @@
+<resources>
+    <style name="CustomActionBarTheme"
+        parent="Theme.AppCompat.Dialog.MinWidth">
+        <item name="android:windowNoTitle">true</item>
+        <!-- colorPrimary is used for the default action bar background -->
+        <!--<item name="colorPrimary">@android:color/transparent</item>-->
+
+        <!--&lt;!&ndash; colorPrimaryDark is used for the status bar &ndash;&gt;-->
+        <!--<item name="colorPrimaryDark">@android:color/transparent</item>-->
+        <!--&lt;!&ndash; Support library compatibility &ndash;&gt;-->
+        <item name="android:actionBarStyle">@style/ActionBarStyle.Transparent</item>
+        <item name="actionBarStyle">@style/ActionBarStyle.Transparent</item>
+    </style>
+    <style name="ActionBarStyle.Transparent" parent="@style/Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/translucentBlack</item>
+        <item name="background">@color/translucentBlack</item>
+    </style>
+    <style name="ForecastListStyle">
+        <item name="android:choiceMode">singleChoice</item>
+    </style>
+    <style name="dialogImage">
+        <item name="android:minWidth">400dp</item>
+        <item name="android:minHeight">400dp</item>
+    </style>
+</resources>

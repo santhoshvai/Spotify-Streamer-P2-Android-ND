@@ -1,5 +1,6 @@
 package com.example.android.spotifystreamer;
 
+import android.app.DialogFragment;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -8,14 +9,15 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.graphics.Palette;
 import android.os.Bundle;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -39,7 +41,7 @@ import android.widget.MediaController.MediaPlayerControl;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class TrackActivityFragment extends Fragment implements MediaPlayerControl {
+public class TrackActivityFragment extends DialogFragment implements MediaPlayerControl {
 
     private final SpotifyApi spotifyApi = new SpotifyApi();
     private final SpotifyService spotify = spotifyApi.getService();
@@ -54,30 +56,48 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
     private int trackPos;
     private String artistName = "";
     private boolean paused=false, playbackPaused=false;
+    private ShareActionProvider miShareAction;
 
     public TrackActivityFragment() {
     }
-
+    static TrackActivityFragment newInstance() {
+        return new TrackActivityFragment();
+    }
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_track, container, false);
         Intent intent = getActivity().getIntent();
+        SharedPreferences sharedPreferences = MiscUtils.getFromSharePref(getActivity());
+        trackListCacheJson = sharedPreferences.getString("trackListCache", null);
         if (savedInstanceState == null && intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
             trackPos = intent.getIntExtra(Intent.EXTRA_TEXT, 0);
             artistName = intent.getStringExtra("ArtistName");
-            SharedPreferences sharedPreferences = MiscUtils.getFromSharePref(getActivity());
-            trackListCacheJson = sharedPreferences.getString("trackListCache", null);
-            if (trackListCacheJson.equals(null) ) {
-                Log.e("createView", "No tracklistJson");
-            }
-            songList = gson.fromJson(trackListCacheJson, new TypeToken<List<Track>>() {}.getType());
-        } else { // creating from a previously saved instance
+
+        } else if (savedInstanceState != null){ // creating from a previously saved instance
             trackPos = savedInstanceState.getInt("trackPos");
             artistName = savedInstanceState.getString("artistName");
             trackListCacheJson = savedInstanceState.getString("songList");
             songList = gson.fromJson(trackListCacheJson, new TypeToken<List<Track>>() {}.getType());
+        } else {
+            Bundle b = getArguments();
+            if (b != null) {
+                artistName = b.getString("ArtistName");
+                trackPos = b.getInt("position");
+            }
         }
+        Button shareBtn = (Button) rootView.findViewById(R.id.Sharebutton);
+        shareBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onShareItem(v);
+            }
+        });
+        songList = gson.fromJson(trackListCacheJson, new TypeToken<List<Track>>() {}.getType());
         setRetainInstance(true);
         return rootView;
     }
@@ -92,11 +112,23 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
             Log.v("playIntent", "was null");
             playIntent = new Intent (getActivity().getApplicationContext(), MusicService.class);
             getActivity().getApplicationContext().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            getActivity().getApplicationContext().startService(playIntent);
+//            getActivity().getApplicationContext().startService(playIntent);
         }
+//        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(artistName);
         Track track = songList.get(trackPos);
         setUp(track);
 
+    }
+
+    // Can be triggered by a view event such as a button press
+    public void onShareItem(View v) {
+            // Construct a ShareIntent with link
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, songList.get(trackPos).preview_url);
+            shareIntent.setType("text/plain");
+            // Launch sharing dialog for image
+            startActivity(Intent.createChooser(shareIntent, "Share preview song url.."));
     }
     @Override
     public void onStart() {
@@ -123,6 +155,7 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
     @Override
     public void onResume(){ //ensure that the controller displays when the user returns to the app.
         super.onResume();
+        getActivity().setTitle(artistName);
         if(paused){
             setController();
             paused=false;
@@ -179,10 +212,10 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
             String albumArtWorkUrl = album.images.get(0).url;
             String albumName = album.name;
 
-            final TextView trackNameTextView = (TextView)  getActivity().findViewById(R.id.track_textview);
-            final TextView albumNameTextView = (TextView)  getActivity().findViewById(R.id.album_textview);
-            final TextView artistNameTextView = (TextView)  getActivity().findViewById(R.id.artist_textview);
-            final ImageView albumArtView = (ImageView) getActivity().findViewById(R.id.albumart_imageView);
+            final TextView trackNameTextView = (TextView)  getView().findViewById(R.id.track_textview);
+            final TextView albumNameTextView = (TextView)  getView().findViewById(R.id.album_textview);
+            final TextView artistNameTextView = (TextView)  getView().findViewById(R.id.artist_textview);
+            final ImageView albumArtView = (ImageView) getView().findViewById(R.id.albumart_imageView);
 
             trackNameTextView.setText(trackName);
             albumNameTextView.setText(albumName);
@@ -210,7 +243,13 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
     private void setController(){
         //set the controller up
         Log.d("controller", "SETTING");
-            controller = new MusicController(getActivity());
+        if (controller != null) {
+            // avoid overlaaping bars
+            controller.hide();
+            controller = null;
+        }
+
+        controller = new MusicController(getActivity());
             controller.setPrevNextListeners(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -226,13 +265,13 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
             controller.setAnchorView(getView().findViewById(R.id.albumart_imageView));
             controller.setEnabled(true);
 
-        getView().findViewById(R.id.albumart_imageView).post(new Runnable() {
+        getView().findViewById(R.id.albumart_imageView).postDelayed(new Runnable() {
             public void run() {
                 if (musicSrv != null && musicSrv.getPrepared()) { // on config changes
                     controller.show(0);
                 }
             }
-        });
+        }, 100);
     }
     @Override
     public void start() {
@@ -250,6 +289,9 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
     public int getDuration() {
         if(isPlaying())
             return musicSrv.getDur();
+        else if (playbackPaused && musicSrv.getPrepared()) {
+            return musicSrv.getDur();
+        }
         else return 0;
     }
 
@@ -257,6 +299,9 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
     public int getCurrentPosition() {
         if(isPlaying())
             return musicSrv.getPosn();
+        else if (playbackPaused && musicSrv.getPrepared()) {
+            return musicSrv.getPosn();
+        }
         else return 0;
     }
 
@@ -299,7 +344,6 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
     private void playNext() {
         musicSrv.playNext();
         if(playbackPaused){
-//            setController();
             playbackPaused=false;
         }
     }
@@ -307,10 +351,10 @@ public class TrackActivityFragment extends Fragment implements MediaPlayerContro
     private void playPrev(){
         musicSrv.playPrev();
         if(playbackPaused){
-//            setController();
             playbackPaused=false;
         }
     }
+    // update album art, trackname etc
     private void uiUpdate(){
         trackPos = musicSrv.getSongPos();
         setUp(songList.get(trackPos));

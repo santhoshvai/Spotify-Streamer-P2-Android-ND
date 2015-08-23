@@ -1,5 +1,6 @@
 package com.example.android.spotifystreamer;
 
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -14,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -36,14 +38,20 @@ import retrofit.RetrofitError;
 public class MainActivityFragment extends Fragment {
 
     private ImageAndTextListAdapter mArtistAdapter;
+    // Flag determines if this is a one or two pane layout
+    private boolean isTwoPane = false;
+    private int mPosition = ListView.INVALID_POSITION;
     private String artistName = "";
+    private String searchString = "";
+    private final String SELECTED_KEY = "selected_position";
     private List<Artist> artistListCache = new ArrayList<Artist>();
     private final SpotifyApi spotifyApi = new SpotifyApi();
     private final SpotifyService spotify = spotifyApi.getService();
 
     public MainActivityFragment() {
     }
-        @Override
+
+    @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             // Check whether we're recreating a previously destroyed instance
@@ -52,6 +60,8 @@ public class MainActivityFragment extends Fragment {
                 artistName = savedInstanceState.getString("artistName");
                 String artistListCacheJson = savedInstanceState.getString("artistListCache");
                 Gson gson = new Gson();
+                searchString = savedInstanceState.getString("searchString");
+                mPosition = savedInstanceState.getInt(SELECTED_KEY);
                 artistListCache = gson.fromJson(artistListCacheJson, new TypeToken<List<Artist>>(){}.getType());
             } else {
                 // Probably initialize members with default values for a new instance
@@ -60,9 +70,26 @@ public class MainActivityFragment extends Fragment {
                     getActivity(), // current context
                     (ArrayList<Artist>)artistListCache);
         }
+    private void determinePaneLayout() {
+        FrameLayout fragmentItemDetail = (FrameLayout) getActivity().findViewById(R.id.topTracksFragmentContainer);
+        // If there is a second pane for details
+        if (fragmentItemDetail != null) {
+            isTwoPane = true;
+        }
+    }
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        // Call this to determine which layout we are in (tablet or phone)
+        determinePaneLayout();
+    }
         @Override
         public void onSaveInstanceState(Bundle savedInstanceState) {
             // Save the user's current state
+            if (mPosition != ListView.INVALID_POSITION) {
+                savedInstanceState.putInt(SELECTED_KEY, mPosition);
+            }
+            savedInstanceState.putString("searchString", searchString);
             savedInstanceState.putString("artistName", artistName);
             Gson gson = new Gson();
             String artistListCacheJson = gson.toJson(artistListCache, new TypeToken<List<Artist>>(){}.getType());
@@ -93,6 +120,7 @@ public class MainActivityFragment extends Fragment {
                 if (artistSearchResult.size() == 0) {
                     UIUtils.ArtistNotFoundAlert(getActivity().findViewById(R.id.listview_artists));
                 }
+
             }
 
         }
@@ -100,7 +128,7 @@ public class MainActivityFragment extends Fragment {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
-            ListView listView = (ListView) rootView.findViewById(R.id.listview_artists);
+            final ListView listView = (ListView) rootView.findViewById(R.id.listview_artists);
             listView.setAdapter(mArtistAdapter);
             EditText searchArtist = (EditText) rootView.findViewById(R.id.searchArtist);
             searchArtist.setText(artistName);
@@ -118,8 +146,23 @@ public class MainActivityFragment extends Fragment {
                 public void onTextChanged(CharSequence s, int start,
                                           int before, int count) {
                     if(s.length() != 0) {
-                        if (MiscUtils.isNetworkAvailable(getActivity().getApplicationContext()))
-                            new updateArtistList().execute(new String[]{s.toString()});
+                        if (MiscUtils.isNetworkAvailable(getActivity().getApplicationContext())) {
+                            if (!searchString.equals(s.toString())) {
+                                searchString = s.toString();
+                                new updateArtistList().execute(new String[]{s.toString()});
+                            } else {
+                                if (mPosition != ListView.INVALID_POSITION) {
+                                    listView.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            listView.smoothScrollToPosition(mPosition);
+                                        }
+                                    });
+//                                    listView.setSelection(mPosition);
+//                                    listView.smoothScrollToPosition(mPosition);
+                                }
+                            }
+                        }
                         else
                             UIUtils.InternetAccessibilityAlert(getActivity().findViewById(R.id.listview_artists));
                     }
@@ -128,12 +171,27 @@ public class MainActivityFragment extends Fragment {
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Log.d("ListItem", "itemClicked");
+                    mPosition = position;
                     if (MiscUtils.isNetworkAvailable(getActivity().getApplicationContext())){
                         Artist artist = mArtistAdapter.getItem(position);
-                        Intent tracksIntent = new Intent(getActivity(), TopTracksActivity.class)
-                                .putExtra(Intent.EXTRA_TEXT, artist.id);
-                        tracksIntent.putExtra("ArtistName", artist.name);
-                        startActivity(tracksIntent);
+                        if (isTwoPane) { // single activity with list and detail
+                            // Replace framelayout with new detail fragment
+                            Bundle b = new Bundle();
+                            b.putString("ArtistName", artist.name);
+                            b.putString("artistId", artist.id);
+                            TopTracksActivityFragment fragmentItem =  new TopTracksActivityFragment();
+                            fragmentItem.setArguments(b);
+                            android.support.v4.app.FragmentTransaction ft = getFragmentManager().beginTransaction();
+                            ft.replace(R.id.topTracksFragmentContainer, fragmentItem);
+                            ft.commit();
+                        } else { // go to separate activity
+                            // launch detail activity using intent
+                            Intent tracksIntent = new Intent(getActivity(), TopTracksActivity.class)
+                                    .putExtra(Intent.EXTRA_TEXT, artist.id);
+                            tracksIntent.putExtra("ArtistName", artist.name);
+                            startActivity(tracksIntent);
+                        }
                     } else
                         UIUtils.InternetAccessibilityAlert(getActivity().findViewById(R.id.listview_artists));
                 }
